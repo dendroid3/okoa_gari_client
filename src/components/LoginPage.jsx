@@ -28,7 +28,7 @@ const LoginPage = () => {
 
     try {
 
-      const response = await fetch(`${BASE_URL}/login`, {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -38,15 +38,17 @@ const LoginPage = () => {
           password: password
         }),
       });
-      // const data = await response.json();
-
+      const data = await response.json();
+      console.log("response", response)
+      console.log("data", data)
+      // return
       // Replace with your actual login logic
-      if (response) {
-        const data = await response.json()
+      if (response.ok) {
+        // const data = await response.json()
         const access_token = data.access_token
       
         localStorage.setItem('userToken', access_token);
-        localStorage.setItem('userData', data);
+        localStorage.setItem('userData', JSON.stringify(data.user));
         
         navigate(`/${role}-dashboard`);
       } else {

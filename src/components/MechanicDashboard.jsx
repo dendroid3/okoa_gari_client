@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaTachometerAlt, FaCreditCard, FaRegClock, FaBell, FaInbox, FaUserAlt, FaArrowLeft } from 'react-icons/fa';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import BASE_URL from './../UTILS';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
@@ -17,6 +18,117 @@ const MechanicDashboard = () => {
     totalPayments: 0,
     performanceData: [],
   });
+
+  const [newServiceDetails, setNewServiceDetails] = useState({
+    name: 'Body Work',
+    cost: 10000
+  })
+
+  const [userServices, setUserServices] = useState([])
+  const [userServiceRequests, setUserServiceRequests] = useState([])
+
+  const fetchUserServiceRequests = async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/service_user/my_requests`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      console.log(response)
+      const data = await response.json()
+
+      console.log('data', data)
+      if(response.ok){
+        setUserServiceRequests(data)
+        // alert('service added successfully')
+        // getUserVehicles()
+      }
+      console.log(response)
+    } catch (error) {
+      // alert('Could not add service. Pleaase try again')
+      console.log(error)
+    }
+  }
+
+  const fetchUserServices = async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/services/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      console.log(response)
+      const data = await response.json()
+
+      console.log('data', data)
+      if(response.ok){
+        setUserServices(data)
+        // alert('service added successfully')
+        // getUserVehicles()
+      }
+      console.log(response)
+    } catch (error) {
+      // alert('Could not add service. Pleaase try again')
+      console.log(error)
+    }
+  }
+
+  const handleNewServiveDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setNewServiceDetails((prevDetails) => ({
+      ...prevDetails,
+      [name]: value,
+    }));
+  };
+
+  const handleAddService = async () => {
+    {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+  
+      try {
+        const response = await fetch(`${BASE_URL}/services/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(newServiceDetails),
+        });
+
+        if(response.ok){
+          alert('service added successfully')
+          fetchUserServices()
+        }
+        console.log(response)
+      } catch (error) {
+        alert('Could not add service. Pleaase try again')
+        console.log(error)
+      }
+    }
+  }
+
 
   // Mock Service Requests
   const fetchServiceRequests = useCallback(async () => {
@@ -74,6 +186,10 @@ const MechanicDashboard = () => {
     fetchPaymentHistory();
   }, [fetchServiceRequests, fetchPaymentHistory]);
 
+  useEffect(() => {
+    fetchUserServices()
+    fetchUserServiceRequests()
+  }, [])
   const chartOptions = useMemo(() => ({
     responsive: true,
     plugins: {
@@ -147,7 +263,7 @@ const MechanicDashboard = () => {
       <div className="w-full md:w-1/4 bg-gray-800 text-white p-6 fixed md:relative md:h-full z-10 shadow-lg">
         <h2 className="text-2xl font-bold text-center text-blue-400 mb-6">Mechanic Dashboard</h2>
         <ul className="space-y-4">
-          {['serviceRequests', 'paymentHistory', 'notifications', 'messages', 'analytics'].map((section) => (
+          {['myServices', 'serviceRequests', 'paymentHistory', 'notifications', 'messages', 'analytics'].map((section) => (
             <li key={section}>
               <button
                 onClick={() => handleSectionClick(section)}
@@ -173,26 +289,85 @@ const MechanicDashboard = () => {
           </button>
         </div>
 
+        {activeSection === 'myServices' && (
+          <div>
+            My Services
+            <div>
+              {userServices.length === 0 ? (
+                <p>No Services added yet</p> // Message when array is empty
+              ) : (
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border p-3">Service Name</th>
+                      <th className="border p-3">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userServices.map((service, index) => (
+                      <tr key={index}>
+                        <td className="border p-3">{service.name}</td>
+                        <td className="border p-3">{service.cost}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* {"userServices.length"} */}
+            Add New Service
+            {['name', 'cost'].map((field) => {
+                  return (
+                    <input
+                      key={field}
+                      type={(field == 'name' ? 'text' : 'number')}
+                      name={field}
+                      className="p-3 border mt-2 w-full rounded-md"
+                      style={{ color: "#000", backgroundColor: "#fff" }}
+                      value={newServiceDetails[field]}
+                      onChange={handleNewServiveDetailsChange}
+                    />
+                  );
+              })}
+
+              <button
+                onClick={handleAddService}
+                className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+              >
+                Add Service
+              </button>
+          </div>
+        )}
+        {/* Render based on active section */}
+        {activeSection === 'serviceRequests' && (
+          <div>
+            <h3 className="text-2xl font-bold mb-4">Service Requests</h3>
+            <ul>
+              {userServiceRequests.map((request, index) => (
+                <li key={index} className="mt-4 p-4 border rounded-md">
+                  <p><strong>Service:</strong> {request.service_name}</p>
+                  <p><strong>Customer Name:</strong> {request.customer_name}</p>
+                  <p><strong>Customer Email:</strong> {request.customer_email}</p>
+                  <p><strong>Vehicle Model:</strong> {request.vehicle_model}</p>
+                  <p><strong>Vehicle Registration:</strong> {request.vehicle_registration}</p>
+                  <p><strong>Vehicle Year:</strong> {request.vehicle_year}</p>
+                  <p><strong>Cost:</strong> {request.service_cost}</p>
+                </li>
+              ))}
+            </ul>
+
+            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+              <Line data={chartData} options={chartOptions} />
+            </div>
+          </div>
+        )}
+
         {/* Render based on active section */}
         {activeSection === 'analytics' && (
           <div>
-            <h3 className="text-2xl font-bold mb-4">Analytics</h3>
-            <div className="space-y-4 mb-6">
-              <div className="flex space-x-6">
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl font-semibold">{analytics.waitingClients}</span>
-                  <span className="text-lg">Waiting Clients</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl font-semibold">{analytics.completedOrders}</span>
-                  <span className="text-lg">Completed Orders</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl font-semibold">${analytics.totalPayments}</span>
-                  <span className="text-lg">Total Payments</span>
-                </div>
-              </div>
-            </div>
+            <h3 className="text-2xl font-bold mb-4">Services Requested</h3>
+            
 
             <div className="bg-gray-800 p-6 rounded-lg shadow-md">
               <Line data={chartData} options={chartOptions} />

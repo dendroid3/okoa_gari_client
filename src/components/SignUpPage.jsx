@@ -14,8 +14,7 @@ const SignUpPage = () => {
 
   const [newUserDetails, setNewUserDetails] = useState({
     'email': '',
-    'first_name': '',
-    'last_name': '',
+    'name': '',
     'password': '',
     'role': role,
     'location': '',
@@ -27,7 +26,7 @@ const SignUpPage = () => {
     // localStorage.setItem('userToken', 'new-user-token'); // Example token storage
     try {
       // setIsLoggedIn(true);
-      const response = await fetch(`${BASE_URL}/signup`, {
+      const response = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -35,11 +34,16 @@ const SignUpPage = () => {
         body: JSON.stringify(newUserDetails),
       });
       const data = await response.json();
+      alert(data.msg)
+      // console.log("ok", )
+      if(response.ok){
+        navigate(`/login?role=${role}`);
+      }
       console.log(data)
     } catch (error) {
         console.error("Error fetching profile:", error);
     }
-    navigate(`/${role}-dashboard`);
+    // navigate(`/${role}-dashboard`);
     console.log(newUserDetails)
   };
 
@@ -66,15 +70,8 @@ const SignUpPage = () => {
         <form className="space-y-4">
           <input
             type="text"
-            placeholder="Enter your first name"
-            name="first_name"
-            className="w-full p-3 bg-gray-700 text-white rounded-lg"
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            placeholder="Enter your last name"
-            name="last_name"
+            placeholder="Enter your name"
+            name="name"
             className="w-full p-3 bg-gray-700 text-white rounded-lg"
             onChange={handleChange}
           />
