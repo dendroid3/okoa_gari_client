@@ -9,7 +9,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 
 const MechanicDashboard = () => {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('analytics');
+  const [activeSection, setActiveSection] = useState('myServices');
   const [serviceRequests, setServiceRequests] = useState([]);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [analytics, setAnalytics] = useState({
