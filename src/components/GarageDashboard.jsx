@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTachometerAlt, FaCreditCard, FaRegClock, FaBell, FaInbox, FaUserAlt, FaArrowLeft } from 'react-icons/fa';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import BASE_URL from './../UTILS';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Modal, Button, Form } from "react-bootstrap";  import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import BASE_URL from '../UTILS';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
-const MechanicDashboard = () => {
+const GarageDashboard = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('myServices');
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -20,9 +21,29 @@ const MechanicDashboard = () => {
   });
 
   const [newServiceDetails, setNewServiceDetails] = useState({
-    name: 'Body Work',
-    cost: 10000
+    name: '',
+    location: '',
+    cost: null
   })
+
+  
+  const [serviceToBeEdited, setServiceToBeEdited] = useState({
+    name: '',
+    location: '',
+    cost: null
+  })
+
+  const [isEditServiceModalOpen, setIsEditServiceModalOpen] = useState(false)
+  const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false)
+
+  const handleToogleEditServiceModal = (service) => {
+    if(service){
+      setServiceToBeEdited(service)
+      setIsEditServiceModalOpen(true)
+    } else {
+      setIsEditServiceModalOpen(false)
+    }
+  }
 
   const [userServices, setUserServices] = useState([])
   const [userServiceRequests, setUserServiceRequests] = useState([])
@@ -99,8 +120,10 @@ const MechanicDashboard = () => {
     }));
   };
 
-  const handleAddService = async () => {
+  const handleAddService = async (e) => {
     {
+      e.preventDefault()
+
       const token = localStorage.getItem('userToken');
       if (!token) {
         console.error('No token found');
@@ -120,6 +143,7 @@ const MechanicDashboard = () => {
         if(response.ok){
           alert('service added successfully')
           fetchUserServices()
+          setIsAddServiceModalOpen(false)
         }
         console.log(response)
       } catch (error) {
@@ -128,7 +152,82 @@ const MechanicDashboard = () => {
       }
     }
   }
+  
+  const handleEditServiveDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setServiceToBeEdited((prevDetails) => ({
+      ...prevDetails,
+      [name]: value,
+    }));
+  };
 
+  const handleEditService = async (e) => {
+    {
+      e.preventDefault()
+
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BASE_URL}/services/${serviceToBeEdited.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(serviceToBeEdited),
+        });
+
+        if(response.ok){
+          alert('service edited successfully')
+          setIsEditServiceModalOpen(false)
+          fetchUserServices()
+        }
+        console.log(response)
+      } catch (error) {
+        alert('Could not edit service. Pleaase try again')
+        console.log(error)
+      }
+    }
+  }
+
+  const handleDeleteService = async (e) => {
+    const confirmationMessage = "You are about to delete this service. Proceed?"
+
+    if(!confirm(confirmationMessage)){
+      return
+    }
+
+    const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BASE_URL}/services/${serviceToBeEdited.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(serviceToBeEdited),
+        });
+
+        if(response.ok){
+          alert('service deleleted successfully')
+          setIsEditServiceModalOpen(false)
+          fetchUserServices()
+        }
+        console.log(response)
+      } catch (error) {
+        alert('Could not delete service. Pleaase try again')
+        console.log(error)
+      }
+  }
 
   // Mock Service Requests
   const fetchServiceRequests = useCallback(async () => {
@@ -261,9 +360,9 @@ const MechanicDashboard = () => {
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
       {/* Sidebar */}
       <div className="w-full md:w-1/4 bg-gray-800 text-white p-6 fixed md:relative md:h-full z-10 shadow-lg">
-        <h2 className="text-2xl font-bold text-center text-blue-400 mb-6">Mechanic Dashboard</h2>
+        <h2 className="text-2xl font-bold text-center text-blue-400 mb-6">Garage Dashboard</h2>
         <ul className="space-y-4">
-          {['myServices', 'serviceRequests', 'paymentHistory', 'notifications', 'messages', 'analytics'].map((section) => (
+          {['myServices', 'serviceRequests'].map((section) => (
             <li key={section}>
               <button
                 onClick={() => handleSectionClick(section)}
@@ -291,7 +390,15 @@ const MechanicDashboard = () => {
 
         {activeSection === 'myServices' && (
           <div>
-            My Services
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl font-semibold text-white -900">Our Services</h3>
+              <button
+                onClick={setIsAddServiceModalOpen}
+                className="bg-green-500 text-white py-2 px-6 ml-4 rounded-lg mt-0 hover:bg-green-600 transition"
+              >
+                Add Service
+              </button>
+            </div>
             <div>
               {userServices.length === 0 ? (
                 <p>No Services added yet</p> // Message when array is empty
@@ -299,15 +406,26 @@ const MechanicDashboard = () => {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="border p-3">Service Name</th>
-                      <th className="border p-3">Cost</th>
+                      <th className="border p-3 text-center">Service Name</th>
+                      <th className="border p-3 text-center">Location</th>
+                      <th className="border p-3 text-center">Cost</th>
+                      <th className="border p-3 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {userServices.map((service, index) => (
                       <tr key={index}>
-                        <td className="border p-3">{service.name}</td>
-                        <td className="border p-3">{service.cost}</td>
+                        <td className="border p-3 text-center">{service.name}</td>
+                        <td className="border p-3 text-center">{service.location}</td>
+                        <td className="border p-3 text-center">{service.cost}</td>
+                        <td className="border p-3 text-center">
+                          <button
+                            onClick={() => handleToogleEditServiceModal(service)} 
+                            className="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 transition"
+                          >
+                            Edit Details
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -315,28 +433,84 @@ const MechanicDashboard = () => {
               )}
             </div>
 
-            {/* {"userServices.length"} */}
-            Add New Service
-            {['name', 'cost'].map((field) => {
-                  return (
-                    <input
-                      key={field}
-                      type={(field == 'name' ? 'text' : 'number')}
-                      name={field}
-                      className="p-3 border mt-2 w-full rounded-md"
-                      style={{ color: "#000", backgroundColor: "#fff" }}
-                      value={newServiceDetails[field]}
-                      onChange={handleNewServiveDetailsChange}
-                    />
-                  );
-              })}
+               {/* Add Service Modal */}
+               <Modal show={isAddServiceModalOpen} onHide={() => setIsAddServiceModalOpen(false)}>
+                <Modal.Header closeButton>
+                  <Modal.Title>Add New Service</Modal.Title>
+                </Modal.Header>
+                
+                <Modal.Body>              
+                  <Form onSubmit={handleAddService}>
+                  {['name', 'location', 'cost'].map((field) => (
+                    <Form.Group controlId={`service${field}`}>
+                      <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                      <Form.Control
+                        type={(field == 'name' || field == 'location') ? "text" : "number"}
+                        placeholder={`Enter Service ${field.charAt(0).toUpperCase()}${field.slice(1)}`}
+                        name={field}
+                        value={newServiceDetails[field]}
+                        onChange={handleNewServiveDetailsChange}
+                        required
+                      />
+                    </Form.Group>
+                  ))}
+                  
+                    <Button
+                      className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+                      type="submit"
+                    >
+                      Add Service
+                    </Button>
+                  </Form>
+                </Modal.Body>
+              </Modal>
 
-              <button
-                onClick={handleAddService}
-                className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
-              >
-                Add Service
-              </button>
+               {/* Edit Service Modal */}
+               <Modal show={isEditServiceModalOpen} onHide={() => setIsEditServiceModalOpen(false)}>
+                <Modal.Header closeButton>
+                  <Modal.Title>Edit Service</Modal.Title>
+                </Modal.Header>
+                
+                <Modal.Body>              
+                  <Form onSubmit={handleEditService}>
+                    {['name', 'location', 'cost'].map((field) => (
+                      <Form.Group controlId={`service${field}`}>
+                        <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                        <Form.Control
+                          type={(field == 'name' || field == 'location') ? "text" : "number"}
+                          placeholder={`Enter Service ${field.charAt(0).toUpperCase()}${field.slice(1)}`}
+                          name={field}
+                          value={serviceToBeEdited[field]}
+                          onChange={handleEditServiveDetailsChange}
+                          required
+                        />
+                      </Form.Group>
+                    ))}
+                    <div className="flex justify-between">  
+                      <Button
+                        className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+                        type="submit"
+                      >
+                        Edit Service
+                      </Button>
+                      <Button
+                        onClick={handleDeleteService}
+                        className="bg-red-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-red-600 transition"
+                        style={{
+                          backgroundColor: 'red',
+                          color: 'white',
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Normal shadow
+                          transition: 'box-shadow 0.3s ease', // Smooth transition for hover effect
+                        }}
+                        onMouseEnter={(e) => e.target.style.boxShadow = '0 8px 12px rgba(0, 0, 0, 0.2)'} // Hover effect
+                        onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'}
+                      >
+                        Delete Service
+                      </Button>
+                    </div>
+                  </Form>
+                </Modal.Body>
+              </Modal>
           </div>
         )}
         {/* Render based on active section */}
@@ -353,13 +527,10 @@ const MechanicDashboard = () => {
                   <p><strong>Vehicle Registration:</strong> {request.vehicle_registration}</p>
                   <p><strong>Vehicle Year:</strong> {request.vehicle_year}</p>
                   <p><strong>Cost:</strong> {request.service_cost}</p>
+                  <p><strong>Status:</strong> {request.service_paid? "Paid" : "Unpaid"}</p>
                 </li>
               ))}
             </ul>
-
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <Line data={chartData} options={chartOptions} />
-            </div>
           </div>
         )}
 
@@ -381,4 +552,4 @@ const MechanicDashboard = () => {
   );
 };
 
-export default MechanicDashboard;
+export default GarageDashboard;

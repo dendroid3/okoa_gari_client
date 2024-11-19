@@ -13,6 +13,14 @@ import tyreServiceImage from '../assets/tyreservice.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faTwitter, faInstagram } from '@fortawesome/free-brands-svg-icons';
 
+const handleLogOut = () => {
+  const confirmationMessage = "You are about to log out, do you wish to proceed?"
+  if(!confirm(confirmationMessage)) return
+  localStorage.removeItem('userData');
+  localStorage.removeItem('userToken');
+  window.location.href = '/';
+};
+
 // Services Data
 const services = [
   {
@@ -88,10 +96,32 @@ const Navbar = () => {
     return localStorage.getItem('userToken'); // Example check for authentication
   };
 
+  const role = () => {
+    const role = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')).role : "null"
+    
+    return role.charAt(0).toUpperCase() + role.slice(1)
+  }
+
   const handleDashboardClick = (role) => {
     if (isAuthenticated()) {
       navigate(`/${role}-dashboard`);
     } else {
+      if(role == 'admin') {
+        const adminSecretPhrase = 'LetAdminIn'
+        const adminSecretPhraseConfirmation = prompt("Enter Admin Secret Phrase")
+        if(adminSecretPhrase !== adminSecretPhraseConfirmation) {
+          alert("Wrong Admin Secret Phrase..")
+          return
+        }
+      }
+      if(role == 'garage') {
+        const garageSecretPhrase = 'LetGarageIn'
+        const garageSecretPhraseConfirmation = prompt("Enter Garage Secret Phrase")
+        if(garageSecretPhrase !== garageSecretPhraseConfirmation) {
+          alert("Wrong Garage Secret Phrase.")
+          return
+        }
+      }
       navigate(`/login?role=${role}`);
     }
   };
@@ -101,10 +131,43 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-white">Towing Services</h1>
         <div className="space-x-6">
-          <button onClick={() => handleDashboardClick('user')} className="text-gray-200 hover:text-white">User Dashboard</button>
-          <button onClick={() => handleDashboardClick('admin')} className="text-gray-200 hover:text-white">Admin Dashboard</button>
-          <button onClick={() => handleDashboardClick('mechanic')} className="text-gray-200 hover:text-white">Mechanic Dashboard</button>
-          <button onClick={() => handleDashboardClick('super-admin')} className="text-gray-200 hover:text-white">Super Admin Dashboard</button>
+          <>
+            {isAuthenticated() ? (
+              <>
+                <button onClick={() => handleDashboardClick(role())} className="text-gray-200 hover:text-white">
+                  {`${role()} Dashboard`}
+                </button>
+                
+                <button onClick={handleLogOut} 
+                  className="text-gray-200 p-1 rounded"
+                  style={{
+                    backgroundColor: 'red',
+                    color: 'white',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Normal shadow
+                    transition: 'box-shadow 0.3s ease', // Smooth transition for hover effect
+                  }}
+                  onMouseEnter={(e) => e.target.style.boxShadow = '0 8px 12px rgba(0, 0, 0, 0.2)'} // Hover effect
+                  onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'}
+                  >
+                    {"Log out"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => handleDashboardClick('admin')} className="text-gray-200 hover:text-white">
+                  Admin Dashboard
+                </button>
+                <button onClick={() => handleDashboardClick('garage')} className="text-gray-200 hover:text-white">
+                  Garage Dashboard
+                </button>
+                <button onClick={() => handleDashboardClick('user')} className="text-gray-200 hover:text-white">
+                  User Dashboard
+                </button>
+              </>
+            )}
+          </>
+
+          {/* <button onClick={() => handleDashboardClick('super-admin')} className="text-gray-200 hover:text-white">Super Admin Dashboard</button> */}
         </div>
       </div>
     </nav>

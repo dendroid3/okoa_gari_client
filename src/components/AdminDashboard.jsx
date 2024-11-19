@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FaChartLine, FaWrench, FaCreditCard, FaClipboardList, FaRegUser, FaUsers, FaArrowLeft, FaSignOutAlt } from 'react-icons/fa';
 import { Line } from 'react-chartjs-2';
+import BASE_URL from '../UTILS';
 import 'chart.js/auto';
 
 const AdminDashboard = () => {
-  const [selectedSection, setSelectedSection] = useState('analytics');
+  const [selectedSection, setSelectedSection] = useState('manageMechanics');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mechanics, setMechanics] = useState([]);
   const [users, setUsers] = useState([]);
@@ -16,6 +17,73 @@ const AdminDashboard = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const handleDeleteGarage = async (garage) => {
+    const confirmationMessage = "You are about to delete this garage. Proceed?"
+
+    if(!confirm(confirmationMessage)){
+      return
+    }
+
+    const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BASE_URL}/auth/users/${garage.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(garage),
+        });
+
+        if(response.ok){
+          alert('garage deleleted successfully')
+          fetchAllMechanics()
+          fetchAllServices()
+        }
+        console.log(response)
+      } catch (error) {
+        alert('Could not delete garage. Pleaase try again')
+      }
+  }
+
+  const handleDeleteService = async (service) => {
+    const confirmationMessage = "You are about to delete this service. Proceed?"
+
+    if(!confirm(confirmationMessage)){
+      return
+    }
+
+    const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BASE_URL}/services/${service.service_id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(service),
+        });
+
+        if(response.ok){
+          alert('service deleleted successfully')
+          fetchAllServices()
+        }
+        console.log(response)
+      } catch (error) {
+        alert('Could not delete service. Pleaase try again')
+      }
+  }
 
   useEffect(() => {
     // Fetch data from API or use static data
@@ -98,6 +166,83 @@ const AdminDashboard = () => {
     setIsSignUp(true); // Reset to sign-up screen after logout
   };
 
+  const [realMechanics, setRealMechanics ] = useState([])
+
+  const fetchAllMechanics = async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/auth/mechanics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      console.log(response)
+      const data = await response.json()
+
+      console.log('data', data)
+      if(response.ok){
+        if (Array.isArray(data)) {
+          setRealMechanics(data);
+        } else {
+          console.error('Expected an array of services');
+        }
+      }
+      console.log(response)
+    } catch (error) {
+      // alert('Could not add service. Pleaase try again')
+      console.log(error)
+    }
+  }
+
+  const [services, setServices ] = useState([])
+
+  const fetchAllServices = async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/services/all`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      console.log(response)
+      const data = await response.json()
+
+      console.log('data', data)
+      if(response.ok){
+        if (Array.isArray(data)) {
+          setServices(data);
+        } else {
+          console.error('Expected an array of services');
+        }
+      }
+      console.log(response)
+    } catch (error) {
+      // alert('Could not add service. Pleaase try again')
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchAllServices()
+    fetchAllMechanics()
+  }, [])
+
   return (
     <div className="flex h-screen bg-gray-900 text-white">
       {/* Sidebar */}
@@ -105,25 +250,11 @@ const AdminDashboard = () => {
         <h2 className="text-2xl font-bold text-center mb-6 text-white">Admin</h2>
         {/* Sidebar buttons */}
         <button
-          onClick={() => setSelectedSection('analytics')}
-          className={`text-gray-400 hover:text-white flex flex-col items-center ${selectedSection === 'analytics' ? 'text-white' : ''}`}
-        >
-          <FaChartLine size={24} />
-          <span className="mt-2 text-xs">Analytics</span>
-        </button>
-        <button
           onClick={() => setSelectedSection('manageMechanics')}
           className={`text-gray-400 hover:text-white flex flex-col items-center ${selectedSection === 'manageMechanics' ? 'text-white' : ''}`}
         >
           <FaWrench size={24} />
-          <span className="mt-2 text-xs">Mechanics</span>
-        </button>
-        <button
-          onClick={() => setSelectedSection('payments')}
-          className={`text-gray-400 hover:text-white flex flex-col items-center ${selectedSection === 'payments' ? 'text-white' : ''}`}
-        >
-          <FaCreditCard size={24} />
-          <span className="mt-2 text-xs">Payments</span>
+          <span className="mt-2 text-xs">Garages</span>
         </button>
         <button
           onClick={() => setSelectedSection('serviceStatus')}
@@ -131,20 +262,6 @@ const AdminDashboard = () => {
         >
           <FaClipboardList size={24} />
           <span className="mt-2 text-xs">Services</span>
-        </button>
-        <button
-          onClick={() => setSelectedSection('reviews')}
-          className={`text-gray-400 hover:text-white flex flex-col items-center ${selectedSection === 'reviews' ? 'text-white' : ''}`}
-        >
-          <FaUsers size={24} />
-          <span className="mt-2 text-xs">Reviews</span>
-        </button>
-        <button
-          onClick={() => setSelectedSection('complaints')}
-          className={`text-gray-400 hover:text-white flex flex-col items-center ${selectedSection === 'complaints' ? 'text-white' : ''}`}
-        >
-          <FaRegUser size={24} />
-          <span className="mt-2 text-xs">Complaints</span>
         </button>
 
         {/* Toggle Sidebar for mobile */}
@@ -163,96 +280,81 @@ const AdminDashboard = () => {
           <span>Back to Landing Page</span>
         </button>
 
-        {isLoggedIn ? (
-          <>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 p-2 rounded text-white"
-            >
-              <FaSignOutAlt className="mr-2" />
-              Logout
-            </button>
-            {/* Render dashboard sections here */}
+        <div>
+          {selectedSection === 'manageMechanics' && (
             <div>
-              {/* Section rendering logic */}
+              {/* Content for 'manageMechanics' */}
+              <h1>Manage Garages</h1>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-3 text-center">Garage</th>
+                    <th className="border p-3 text-center">Email</th>
+                    <th className="border p-3 text-center">Number of Services</th>
+                    <th className="border p-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {realMechanics.map((garage, index) => (
+                    <tr key={index}>
+                      {/* <td className="border p-3 text-center">{garage.}</td> */}
+                      <td className="border p-3 text-center">{garage.name}</td>
+                      <td className="border p-3 text-center">{garage.email}</td>
+                      <td className="border p-3 text-center">{garage.number_of_services}</td>
+                      <td className="border p-3 text-center">
+                        <button
+                          onClick={() => handleDeleteGarage(garage)} 
+                          className="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 transition"
+                        >
+                          Delete Garage
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </>
-        ) : (
-          <div>
-            {isSignUp ? (
-              <>
-                <h2 className="text-2xl mb-4">Sign Up</h2>
-                <form>
-                  <div className="mb-4">
-                    <input
-                      type="text"
-                      placeholder="Full Name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="p-2 w-full bg-gray-800 rounded border border-gray-700"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <input
-                      type="email"
-                      placeholder="Email Address"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="p-2 w-full bg-gray-800 rounded border border-gray-700"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="p-2 w-full bg-gray-800 rounded border border-gray-700"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSignUp}
-                    className="bg-blue-500 p-2 rounded text-white w-full"
-                  >
-                    Sign Up
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <h2 className="text-2xl mb-4">Log In</h2>
-                <form>
-                  <div className="mb-4">
-                    <input
-                      type="email"
-                      placeholder="Email Address"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="p-2 w-full bg-gray-800 rounded border border-gray-700"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="p-2 w-full bg-gray-800 rounded border border-gray-700"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleLogin}
-                    className="bg-blue-500 p-2 rounded text-white w-full"
-                  >
-                    Log In
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        )}
+          )}
+
+          {selectedSection === 'serviceStatus' && (
+            <div>
+              {/* Content for 'serviceStatus' */}
+              <h1>Manage Services</h1>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-3 text-center">Garage</th>
+                    <th className="border p-3 text-center">Service Name</th>
+                    <th className="border p-3 text-center">Location</th>
+                    <th className="border p-3 text-center">Cost</th>
+                    <th className="border p-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {services.map((service, index) => (
+                    <tr key={index}>
+                      <td className="border p-3 text-center">
+                      {service.user_name}<br></br>
+                      {service.user_email}<br></br>
+                      </td>
+                      <td className="border p-3 text-center">{service.service_name}</td>
+                      <td className="border p-3 text-center">{service.service_location}</td>
+                      <td className="border p-3 text-center">{service.service_cost}</td>
+                      <td className="border p-3 text-center">
+                        <button
+                          onClick={() => handleDeleteService(service)} 
+                          className="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 transition"
+                        >
+                          Delete Service
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

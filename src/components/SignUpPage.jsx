@@ -17,7 +17,6 @@ const SignUpPage = () => {
     'name': '',
     'password': '',
     'role': role,
-    'location': '',
   });
 
   const handleSignUp = async () => {
@@ -79,13 +78,6 @@ const SignUpPage = () => {
             type="email"
             placeholder="Enter your email"
             name="email"
-            className="w-full p-3 bg-gray-700 text-white rounded-lg"
-            onChange={handleChange}
-          />
-          <input
-            type="location"
-            placeholder="Enter your location"
-            name="location"
             className="w-full p-3 bg-gray-700 text-white rounded-lg"
             onChange={handleChange}
           />

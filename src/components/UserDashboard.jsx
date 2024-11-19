@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaCar, FaUserAlt, FaHistory, FaRegClock, FaMapMarkerAlt, FaArrowLeft } from 'react-icons/fa';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Modal, Button, Form } from "react-bootstrap";  
 import BASE_URL from './../UTILS';
 
 const UserDashboard = () => {
@@ -25,6 +27,41 @@ const UserDashboard = () => {
     },
   });
 
+  const handleDeleteCar = async (e) => {
+    const confirmationMessage = "You are about to delete this car. Proceed?"
+
+    if(!confirm(confirmationMessage)){
+      return
+    }
+
+    const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BASE_URL}/cars/mine/${carToBeEdited.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(carToBeEdited),
+        });
+
+
+        if(response.ok){
+          alert('car deleleted successfully')
+          getUserVehicles()
+          setIsEditCarModalOpen(0)
+        }
+        console.log(response)
+      } catch (error) {
+        alert('Could not delete car. Pleaase try again')
+        console.log(error)
+      }
+  }
   // const [contactDetails, setContactDetails] = useState(userProfile.contact);
   // const [location, setLocation] = useState('');
   const [serviceType, setServiceType] = useState('');
@@ -32,7 +69,7 @@ const UserDashboard = () => {
   const [review, setReview] = useState('');
   const [complaint, setComplaint] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSection, setActiveSection] = useState('profile'); // Default section is 'profile'
+  const [activeSection, setActiveSection] = useState('car'); // Default section is 'profile'
   const [paymentStatus, setPaymentStatus] = useState('');
   const [requestHistory, setRequestHistory] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -45,19 +82,31 @@ const UserDashboard = () => {
   const [contactDetails, setContactDetails] = useState({
     name: name || '',
     email: email || '',
-    location: location || ''
   });
+
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [filteredServices, setFilteredServices] = useState([]);
+
+  const handleLocationChange = (e) => {
+    const location = e.target.value;
+    setSelectedLocation(location);
+
+    // Filter services based on the selected location
+    const servicesInLocation = services.filter(service => service.service_location === location);
+    setFilteredServices(servicesInLocation);
+  };
+
 
   
   const [userVehicles, setUserVehicles] = useState([]);
 
   const [newCarDetails, setNewCarDetails] = useState({
-    'make': 'make' || '',
-    'model': 'model' || '',
-    'year': 2020 || null,
-    'registration': 'registration' || '',
-    'transmission': 'transmission' || '',
-    'fuel_type': 'fuel_type' || '',
+    'make': '',
+    'model': '',
+    'year': null,
+    'registration': '',
+    'transmission': '',
+    'fuel_type': '',
   })
   const [services, setServices ] = useState([])
   
@@ -95,31 +144,78 @@ const UserDashboard = () => {
     }
   }
 
-
   useEffect(() => {
     fetchAllServices()
   }, [])
 
-  // const services = [
-  //   { id: 1, type: 'towing', name: 'Car Towing' },
-  //   { id: 2, type: 'mechanical', name: 'Flat Tire Fix' },
-  //   { id: 3, type: 'towing', name: 'Heavy Duty Towing' },
-  //   { id: 4, type: 'mechanical', name: 'Engine Diagnostics' },
-  //   { id: 5, type: 'mechanical', name: 'Battery Jumpstart' },
-  // ];
+  const [carToBeEdited, setCarToBeEdited] = useState({
+    make: '',
+    model: '',
+    year: '',
+    registration: '',
+    transmission: '',
+    fuel_type: '',
+  })
 
-  // Handle car details update
-  // const handleVehicleDetailsChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setNewCarDetails((prevDetails) => ({
-  //     ...prevDetails,
-  //     [name]: value,
-  //   }));
-  // };
+  const [isEditCarModalOpen, setIsEditCarModalOpen] = useState(false)
+  const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false)
+
+  const handleToogleEditCarModal = (car) => {
+    if(car){
+      setCarToBeEdited(car)
+      setIsEditCarModalOpen(true)
+    } else {
+      setIsEditCarModalOpen(false)
+    }
+  }
 
   const [vehicleDetails, setVehicleDetails] = useState({
     vehicle_id: null, // Initial value for vehicle_id
   });
+
+  const handleEditCarDetailsInputChange = (event) => {
+    const {name, value} = event.target
+    setCarToBeEdited((prevDetails) =>({
+      ...prevDetails,
+      [name]: value
+    }))
+  }
+
+  const handleUpdateVehicle = async (e) => {
+    e.preventDefault()
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const data = carToBeEdited
+      // data.vehicle_id = carToBeEdited.id
+      // console.log(data)
+      // return
+      const response = await fetch(`${BASE_URL}/cars/mine/${carToBeEdited.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await response.json()
+
+      if(response.ok){
+        alert("Car Details Updated Successfully.")
+        setIsEditCarModalOpen(false)
+        getUserVehicles()
+      }
+
+      console.log(response)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const [vehicleServiceDetails, setVehicleServiceDetails] = useState({
     vehicle_id: null, 
@@ -129,7 +225,7 @@ const UserDashboard = () => {
   const handleVehicleDetailsChange = (event) => {
     const { name, value } = event.target;
     // Update the object with the selected vehicle's ID
-    setVehicleDetails((prevDetails) => ({
+    setNewCarDetails((prevDetails) => ({
       ...prevDetails,
       [name]: value,
     }));
@@ -201,6 +297,7 @@ const UserDashboard = () => {
       return;
     }
 
+    console.log("vehicleServiceDetails", vehicleServiceDetails)
     const response = await fetch(`${BASE_URL}/service_user/add`, {
       method: 'POST',
       headers: {
@@ -241,15 +338,62 @@ const UserDashboard = () => {
   }
 
   // Handle payment completion
-  const handlePayment = (requestId) => {
-    setPaymentStatus('Completed');
-    setRequestHistory((prevHistory) =>
-      prevHistory.map((request) =>
-        request.id === requestId ? { ...request, paymentStatus: 'Completed' } : request
-      )
-    );
-    alert('Payment successful!');
+  const handlePayment = async (request) => {
+    const confirmationMessage =`You are about to pay ${request.garage_name} KES ${request.service_cost} for ${request.service_name}\nProceed?`
+    if(!confirm(confirmationMessage)){
+      return
+    }
+
+    const phoneNumber = prompt("Enter Phone Number beginning with 0")
+
+    const phonePattern = /^(07|01)\d{8}$/;
+
+    if(!phonePattern.test(phoneNumber)) {
+        alert(("Invalid phone number. Please enter a 10-digit number starting with 07 or 01."))
+        handlePayment(request)
+        return
+    } else {
+        console.log("Valid phone number");
+    }
+
+    const paymentData = {
+      service_user_id: request.id,
+      amount: request.service_cost,
+      phone: phoneNumber
+    }
+
+    
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/services/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(paymentData),
+      });
+
+      console.log(response)
+      alert("Service paid successfully")
+    } catch (error) {
+      console.log(error)
+    }
   };
+
+  const handleNewCarDetailsChange = (event) => {
+    const { name, value } = event.target;
+    // Update the object with the selected vehicle's ID
+    setNewCarDetails((prevDetails) => ({
+      ...prevDetails,
+      [name]: value,
+    }));
+  }
 
   const handleAddVehicleSubmit = async (e) => {
     e.preventDefault()
@@ -275,32 +419,9 @@ const UserDashboard = () => {
     }
   }
 
-  const handleUpdateVehicle = async (e) => {
-    e.preventDefault()
-    const token = localStorage.getItem('userToken');
-    if (!token) {
-      console.error('No token found');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${BASE_URL}/vehicles`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(vehicleDetails),
-      });
-
-      console.log(response)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  const handleAddCar = async () => {
+  const handleAddCar = async (e) => {
     {
+      e.preventDefault()
       const token = localStorage.getItem('userToken');
       if (!token) {
         console.error('No token found');
@@ -320,6 +441,7 @@ const UserDashboard = () => {
         if(response.ok){
           alert('car added successfully')
           getUserVehicles()
+          setIsAddCarModalOpen(0)
         }
         console.log(response)
       } catch (error) {
@@ -327,6 +449,7 @@ const UserDashboard = () => {
       }
     }
   }
+
   const getUserVehicles = async () => {
     const token = localStorage.getItem('userToken');
     if (!token) {
@@ -367,7 +490,7 @@ const UserDashboard = () => {
         return (
           <>
             <h4 className="text-lg font-medium mt-6">Contact Details</h4>
-            {['name', 'email', 'location'].map((field) => (
+            {['name', 'email'].map((field) => (
               <input
                 key={field}
                 type="text"
@@ -380,10 +503,6 @@ const UserDashboard = () => {
             ))}
 
              <button
-              // onClick={() => {
-              //   setUserProfile({ car: vehicleDetails, contact: contactDetails });
-              //   alert('Profile updated!');
-              // }}
               onClick={handleUpdateUserDetails}
               className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
             >
@@ -395,163 +514,240 @@ const UserDashboard = () => {
       case 'car':
         return (
           <div className="p-4">
-            <h3 className="text-xl font-semibold text-gray-900">Cars Information</h3>
-            <div className="mt-4">
-              <h4 className="text-lg font-medium">Cars Details</h4>
-              { !userVehicles[0] && <>
-                You have no cars added yet
-              </>}
-              <div>
-                {userVehicles.map((car, index) => (
-                      <div className="mt-4">
-                        <div>
-                          {`Car ${index + 1}`}
-                        </div>
-                        {['make', 'model', 'year', 'registration', 'transmission', 'fuel_type'].map((field) => {
-                          if (field !== 'fuel_type' && field !== 'transmission' && field !== 'year') {
-                            return (
-                              <input
-                                key={field}
-                                disabled
-                                type="text"
-                                name={field}
-                                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                                className="p-3 border mt-2 w-full rounded-md"
-                                value={car[field]}
-                                onChange={handleVehicleDetailsChange}
-                              />
-                            );
-                          } else if (field === 'year') {
-                            return (
-                              <input
-                                key={field}
-                                disabled
-                                type="number"
-                                name={field}
-                                placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                                className="p-3 border mt-2 w-full rounded-md"
-                                value={car[field]}
-                                onChange={handleVehicleDetailsChange}
-                              />
-                            );
-                          }else if (field === 'transmission') {
-                            return (
-                              <select
-                                key={field}
-                                disabled
-                                className="p-3 border mt-2 w-full rounded-md"
-                                name="transmission"
-                                value={car[field]}
-                                onChange={handleVehicleDetailsChange}
-                                required
-                              >
-                                <option value="Manual">Manual</option>
-                                <option value="Automatic">Automatic</option>
-                              </select>
-                            );
-                          } else if (field === 'fuel_type') {
-                            return (
-                              <select
-                                key={field}
-                                disabled
-                                className="p-3 border mt-2 w-full rounded-md"
-                                name="fuel_type"
-                                value={car[field]}
-                                onChange={handleVehicleDetailsChange}
-                                required
-                              >
-                                <option value="Petrol">Petrol</option>
-                                <option value="Diesel">Diesel</option>
-                              </select>
-                            );
-                          }
-
-                          return null;
-                        })}
-                      </div>
-                  ))}
-              </div>
-              
-              <h4 className="text-lg font-medium">Add Car</h4>
-
-              {['make', 'model', 'year', 'registration', 'transmission', 'fuel_type'].map((field) => {
-                if (field !== 'fuel_type' && field !== 'transmission' && field !== 'year') {
-                  return (
-                    <input
-                      key={field}
-                      type="text"
-                      name={field}
-                      placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                      className="p-3 border mt-2 w-full rounded-md"
-                      value={newCarDetails[field]}
-                      onChange={handleVehicleDetailsChange}
-                    />
-                  );
-                } else if (field === 'year') {
-                  return (
-                    <input
-                      key={field}
-                      type="number"
-                      name={field}
-                      placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                      className="p-3 border mt-2 w-full rounded-md"
-                      value={newCarDetails[field]}
-                      onChange={handleVehicleDetailsChange}
-                    />
-                  );
-                }else if (field === 'transmission') {
-                  return (
-                    <select
-                      key={field}
-                      className="p-3 border mt-2 w-full rounded-md"
-                      name="transmission"
-                      value={newCarDetails[field]}
-                      onChange={handleVehicleDetailsChange}
-                      required
-                    >
-                      <option value="Manual">Manual</option>
-                      <option value="Automatic">Automatic</option>
-                    </select>
-                  );
-                } else if (field === 'fuel_type') {
-                  return (
-                    <select
-                      key={field}
-                      className="p-3 border mt-2 w-full rounded-md"
-                      name="fuel_type"
-                      value={newCarDetails[field]}
-                      onChange={handleVehicleDetailsChange}
-                      required
-                    >
-                      <option value="Petrol">Petrol</option>
-                      <option value="Diesel">Diesel</option>
-                    </select>
-                  );
-                }
-
-                return null;
-              })}
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-gray-900">Cars Information</h3>
               <button
-                onClick={handleAddCar}
-                className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+                onClick={setIsAddCarModalOpen}
+                className="bg-green-500 text-white py-2 px-6 ml-4 rounded-lg mt-0 hover:bg-green-600 transition"
               >
                 Add Car
               </button>
             </div>
+            <div className="mt-4">
+              <h4 className="text-lg font-medium">Cars Details</h4>
+              <div>
+              {userVehicles.length === 0 ? (
+                <p>You have no cars added yet</p>                
+              ) : (
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="border p-3">Make</th>
+                      <th className="border p-3">Model</th>
+                      <th className="border p-3">Year</th>
+                      <th className="border p-3">Registration</th>
+                      <th className="border p-3">Transmission</th>
+                      <th className="border p-3">Fuel</th>
+                      <th className="border p-3">Action</th>
 
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userVehicles.map((vehicle, index) => (
+                      <tr key={index}>
+                        <td className="border p-3 text-center">{vehicle.make}</td>
+                        <td className="border p-3 text-center">{vehicle.model}</td>
+                        <td className="border p-3 text-center">{vehicle.year}</td>
+                        <td className="border p-3 text-center">{vehicle.registration}</td>
+                        <td className="border p-3 text-center">{vehicle.transmission}</td>
+                        <td className="border p-3 text-center ">{vehicle.fuel_type}</td>
+                        <td className="border p-3 flex items-center justify-center">
+                          <button
+                            onClick={() => handleToogleEditCarModal(vehicle)} 
+                            className="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 transition"
+                          >
+                            Edit Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+              {/* Add Car Modal */}
+              <Modal show={isAddCarModalOpen} onHide={() => setIsAddCarModalOpen(false)}>
+                <Modal.Header closeButton>
+                  <Modal.Title>Add Car</Modal.Title>
+                </Modal.Header>
+                
+                <Modal.Body>              
+                  <Form onSubmit={handleAddCar}>
+                    {['make', 'model', 'year', 'registration', 'transmission', 'fuel_type'].map((field) => {
+                      if (field !== 'fuel_type' && field !== 'transmission' && field !== 'year') {
+                        return (
+                          <Form.Group controlId={`car${field}`}>
+                            <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder={`Enter Car ${field}`}
+                              name={field}
+                              value={newCarDetails[field]}
+                              onChange={handleNewCarDetailsChange}
+                              required
+                            />
+                          </Form.Group>
+                        )
+                      } else if (field === 'year') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                            <Form.Control
+                              type="number"
+                              placeholder={`Enter Car ${field}`}
+                              name={field}
+                              value={newCarDetails[field]}
+                              onChange={handleNewCarDetailsChange}
+                              required
+                            />
+                          </Form.Group>
+                        )
+                      } else if (field === 'transmission') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                            <Form.Select
+                              aria-label={`Select Car ${field}`}
+                              name={field}
+                              value={newCarDetails[field]}
+                              onChange={handleNewCarDetailsChange}
+                              required
+                            >
+                              <option value="Manual">Manual</option>
+                              <option value="Automatic">Automatic</option>
+                            </Form.Select>
+                          </Form.Group>
+                        )
+                      } else if (field === 'fuel_type') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>Fuel Type</Form.Label>
+                            <Form.Select
+                              aria-label={`Select Car Feul Type`}
+                              name={field}
+                              value={newCarDetails[field]}
+                              onChange={handleNewCarDetailsChange}
+                              required
+                            >
+                              <option value="Petrol">Petrol</option>
+                              <option value="Diesel">Diesel</option>
+                            </Form.Select>
+                          </Form.Group>
+                        )
+                      }
+                      })}
+                  
+                    <Button
+                      className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+                      type="submit"
+                    >
+                      Add Car
+                    </Button>
+                  </Form>
+                </Modal.Body>
+              </Modal>
 
-            <button
-                // onClick={() => {
-                //   setUserProfile({ car: vehicleDetails, contact: contactDetails });
-                //   alert('Profile updated!');
-                // }}
-                onClick={handleUpdateVehicle}
-                className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
-              >
-                Save Changes
-              </button>
+              {/* Edit Car Modal */}
+              <Modal show={isEditCarModalOpen} onHide={handleToogleEditCarModal}>
+                <Modal.Header closeButton>
+                  <Modal.Title>Edit Car Details</Modal.Title>
+                </Modal.Header>
+                
+                <Modal.Body>              
+                  <Form onSubmit={handleUpdateVehicle}>
+                    {['make', 'model', 'year', 'registration', 'transmission', 'fuel_type'].map((field) => {
+                      if (field !== 'fuel_type' && field !== 'transmission' && field !== 'year') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                            <Form.Control
+                              type="text"
+                              placeholder={`Enter Car ${field}`}
+                              name={field}
+                              value={carToBeEdited[field]}
+                              onChange={handleEditCarDetailsInputChange}
+                              required
+                            />
+                          </Form.Group>
+                        )
+                      } else if (field === 'year') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                            <Form.Control
+                              type="number"
+                              placeholder={`Enter Car ${field}`}
+                              name={field}
+                              value={carToBeEdited[field]}
+                              onChange={handleEditCarDetailsInputChange}
+                              required
+                            />
+                          </Form.Group>
+                        )
+                      } else if (field === 'transmission') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                            <Form.Select
+                              aria-label={`Select Car ${field}`}
+                              name={field}
+                              value={carToBeEdited[field]}
+                              onChange={handleEditCarDetailsInputChange}
+                              required
+                            >
+                              <option value="Manual">Manual</option>
+                              <option value="Automatic">Automatic</option>
+                            </Form.Select>
+                          </Form.Group>
+                        )
+                      } else if (field === 'fuel_type') {
+                        return (
+                          <Form.Group controlId="carMake">
+                            <Form.Label>Fuel Type</Form.Label>
+                            <Form.Select
+                              aria-label={`Select Car Feul Type`}
+                              name={field}
+                              value={carToBeEdited[field]}
+                              onChange={handleEditCarDetailsInputChange}
+                              required
+                            >
+                              <option value="Petrol">Petrol</option>
+                              <option value="Diesel">Diesel</option>
+                            </Form.Select>
+                          </Form.Group>
+                        )
+                      }
+                      })}
+                  
+                    <div className="flex justify-between">  
+                      <Button
+                        className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+                        type="submit"
+                      >
+                        Edit Car
+                      </Button>
+                      <Button
+                        onClick={handleDeleteCar}
+                        className="bg-red-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-red-600 transition"
+                        style={{
+                          backgroundColor: 'red',
+                          color: 'white',
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Normal shadow
+                          transition: 'box-shadow 0.3s ease', // Smooth transition for hover effect
+                        }}
+                        onMouseEnter={(e) => e.target.style.boxShadow = '0 8px 12px rgba(0, 0, 0, 0.2)'} // Hover effect
+                        onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'}
+                      >
+                        Delete Service
+                      </Button>
+                    </div>
+                  </Form>
+                </Modal.Body>
+              </Modal>
+            </div>
           </div>
         );
+     
       case 'requestService':
         return (
           <div className="p-4">
@@ -564,27 +760,38 @@ const UserDashboard = () => {
                 onChange={handleVehicleServiceDetailsChange}
                 required
               >
-                <option value="">Select a Vehicle</option>
+                <option value="" disabled>Select a Vehicle</option>
                 {userVehicles.map((car, index) => (
                   <option key={car.id} value={car.id}>
                     {`${index + 1}: ${car.model} (${car.year})`}
                   </option>
                 ))}
               </select>
-              <p className="mt-2">
-                Selected Vehicle ID: {vehicleServiceDetails.vehicle_id}
-              </p>
             </div>
 
-            <div className="relative mt-4">
+            <div className="relative">
               {Array.isArray(services) && services.length > 0 ? (
-                <select className="p-3 border mt-2 w-full rounded-md" onChange={handleVehicleServiceDetailsChange} name="service_id">
-                  {services.map((service, index) => (
-                    <option key={index} value={service.service_id}>
-                      {`${service.service_name} - ${service.service_cost} (${service.user_name} - ${service.user_location})`}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <select onChange={handleLocationChange} value={selectedLocation} className="p-3 border mt-2 w-full rounded-md">
+                    <option value="">Select Location</option>
+                    {[...new Set(services.map(service => service.service_location))].map((location, index) => (
+                      <option key={index} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+
+                  {selectedLocation && (
+                    <select className="p-3 border mt-2 w-full rounded-md" onChange={handleVehicleServiceDetailsChange} name="service_id">
+                      <option value="">Select Service</option>
+                      {filteredServices.map((service, index) => (
+                        <option key={index} value={service.service_id}>
+                          {`${service.user_name}: ${service.service_name}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  </div>
               ) : (
                 <p>No services available</p>
               )}
@@ -608,9 +815,26 @@ const UserDashboard = () => {
                   <p><strong>Service:</strong> {request.service_name}</p>
                   <p><strong>Car:</strong> {`${request.vehicle_model} (${request.vehicle_year})`}</p>
                   <p><strong>Cost:</strong> {request.service_cost}</p>
-                  <p><strong>Mechanic Name:</strong> {request.mechanic_name}</p>
-                  <p><strong>Mechanic Location:</strong> {request.mechanic_location}</p>
-                  <p><strong>Mechanic Email:</strong> {request.mechanic_email}</p>
+                  <p><strong>Garage Name:</strong> {request.garage_name}</p>
+                  <p><strong>Garage Location:</strong> {request.garage_location}</p>
+                  <p><strong>Garage Email:</strong> {request.garage_email}</p>
+                  <p>
+                  <strong>Status: </strong>
+
+                  {request.service_paid ? (
+                    <>Paid</>
+                    ) : (
+                      <>
+                        Unpaid
+                        <button
+                          onClick={() => {handlePayment(request)}}
+                          className="bg-green-500 text-white py-1 ml-2 px-6 rounded-lg hover:bg-blue-600 transition"
+                        >
+                          Pay
+                        </button>
+                      </>
+                    )}
+                  </p>
                 </li>
               ))}
             </ul>
