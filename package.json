@@ -1,7 +1,7 @@
 {
   "name": "towing-project",
   "private": true,
-  "version": "2024.11.19.01",
+  "version": "2024.11.20.01",
   "type": "module",
   "scripts": {
     "dev": "vite",
