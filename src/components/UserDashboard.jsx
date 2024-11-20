@@ -159,6 +159,63 @@ const UserDashboard = () => {
 
   const [isEditCarModalOpen, setIsEditCarModalOpen] = useState(false)
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false)
+  const [isReviewGarageOpen, setIsReviewGarageOpen] = useState(false)
+  const [userServiceReview, setServiceUserReview] = useState({})
+
+  const handleOpenReviewModal = (user_service) => {
+    setIsReviewGarageOpen(true)
+    setServiceUserReview(user_service)
+  }
+
+  const handleCloseReviewModal = () => setIsReviewGarageOpen(false);
+
+  const handleServiceReviewInputChange = (event) => {
+    const {name, value} = event.target
+    setServiceUserReview((prevDetails) =>({
+      ...prevDetails,
+      [name]: value
+    }))
+  }
+
+  const handleSendReview = async (e) => {
+    e.preventDefault()
+    const data = {}
+    data.service_user_id = userServiceReview.id,
+    data.comment = userServiceReview.comment
+    console.log(data)
+
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/service_user/add_review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await response.json()
+      console.log(responseData)
+
+      if(response.ok){
+        alert("Review Updated Successfully.")
+        setIsReviewGarageOpen(false)
+
+        // setIsEditCarModalOpen(false)
+        // getUserVehicles()
+      }
+
+      console.log(response)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const handleToogleEditCarModal = (car) => {
     if(car){
@@ -191,9 +248,6 @@ const UserDashboard = () => {
 
     try {
       const data = carToBeEdited
-      // data.vehicle_id = carToBeEdited.id
-      // console.log(data)
-      // return
       const response = await fetch(`${BASE_URL}/cars/mine/${carToBeEdited.id}`, {
         method: 'PUT',
         headers: {
@@ -738,7 +792,7 @@ const UserDashboard = () => {
                         onMouseEnter={(e) => e.target.style.boxShadow = '0 8px 12px rgba(0, 0, 0, 0.2)'} // Hover effect
                         onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'}
                       >
-                        Delete Service
+                        Delete Car
                       </Button>
                     </div>
                   </Form>
@@ -786,7 +840,7 @@ const UserDashboard = () => {
                       <option value="">Select Service</option>
                       {filteredServices.map((service, index) => (
                         <option key={index} value={service.service_id}>
-                          {`${service.user_name}: ${service.service_name}`}
+                          {`${service.user_name}: ${service.service_name} (KES ${service.service_cost})`}
                         </option>
                       ))}
                     </select>
@@ -804,7 +858,8 @@ const UserDashboard = () => {
             </button>
           </div>
         );
-      case 'requestHistory':
+      
+        case 'requestHistory':
         return (
           <div className="p-4">
             
@@ -818,26 +873,73 @@ const UserDashboard = () => {
                   <p><strong>Garage Name:</strong> {request.garage_name}</p>
                   <p><strong>Garage Location:</strong> {request.garage_location}</p>
                   <p><strong>Garage Email:</strong> {request.garage_email}</p>
-                  <p>
-                  <strong>Status: </strong>
-
-                  {request.service_paid ? (
-                    <>Paid</>
-                    ) : (
-                      <>
-                        Unpaid
-                        <button
-                          onClick={() => {handlePayment(request)}}
-                          className="bg-green-500 text-white py-1 ml-2 px-6 rounded-lg hover:bg-blue-600 transition"
-                        >
-                          Pay
-                        </button>
-                      </>
-                    )}
-                  </p>
+                  {request.review_comment ? (
+                    <p><strong>Review:</strong> {request.review_comment}</p>
+                  ): (
+                    <>
+                    <p>
+                      <strong>Status: </strong>
+                      {request.service_paid ? (
+                        <>
+                          Paid
+                          <button
+                            onClick={() => {handleOpenReviewModal(request)}}
+                            className="bg-green-500 text-white py-1 ml-2 px-6 rounded-lg hover:bg-blue-600 transition"
+                          >
+                            Review
+                          </button>
+                        </>
+                        ) : (
+                          <>
+                            Unpaid
+                            <button
+                              onClick={() => {handlePayment(request)}}
+                              className="bg-green-500 text-white py-1 ml-2 px-6 rounded-lg hover:bg-blue-600 transition"
+                            >
+                              Pay
+                            </button>
+                          </>
+                        )}
+                      </p>
+                    </>
+                  )}
+                  
                 </li>
               ))}
             </ul>
+                         
+            {/* Review Garage Modal */}
+            <Modal show={isReviewGarageOpen} onHide={handleCloseReviewModal}>
+              <Modal.Header closeButton>
+                <Modal.Title>Review Garage Service</Modal.Title>
+              </Modal.Header>
+              
+              <Modal.Body>              
+                <Form onSubmit={handleUpdateVehicle}>
+                <Form.Group controlId="reviewComment">
+                  <Form.Label>Enter Review</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Enter Review"
+                    name="comment"
+                    value={userServiceReview['comment']}
+                    onChange={handleServiceReviewInputChange}
+                    required
+                  />
+                </Form.Group>
+                
+                  <div className="flex justify-between">  
+                    <Button
+                      className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+                      type="submit"
+                      onClick={handleSendReview}
+                    >
+                      Submit Review
+                    </Button>
+                  </div>
+                </Form>
+              </Modal.Body>
+            </Modal>
           </div>
         );
       default:

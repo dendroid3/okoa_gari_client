@@ -527,7 +527,8 @@ const GarageDashboard = () => {
                   <p><strong>Vehicle Registration:</strong> {request.vehicle_registration}</p>
                   <p><strong>Vehicle Year:</strong> {request.vehicle_year}</p>
                   <p><strong>Cost:</strong> {request.service_cost}</p>
-                  <p><strong>Status:</strong> {request.service_paid? "Paid" : "Unpaid"}</p>
+                  <p><strong>Status:</strong> {request.service_paid ? "Paid" : "Unpaid"}</p>
+                  <p><strong>Review:</strong> {request.review_comment ? request.review_comment : "No Review Yet."}</p>
                 </li>
               ))}
             </ul>

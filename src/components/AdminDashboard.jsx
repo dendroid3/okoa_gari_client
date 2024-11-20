@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChartLine, FaWrench, FaCreditCard, FaClipboardList, FaRegUser, FaUsers, FaArrowLeft, FaSignOutAlt } from 'react-icons/fa';
+import { FaChartLine, FaWrench, FaCreditCard, FaComments, FaClipboardList, FaRegUser, FaUsers, FaArrowLeft, FaSignOutAlt } from 'react-icons/fa';
 import { Line } from 'react-chartjs-2';
 import BASE_URL from '../UTILS';
 import 'chart.js/auto';
@@ -17,6 +17,39 @@ const AdminDashboard = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [serviceReviews, setServiceReviews] = useState({});
+
+  const fetchServiceReviews = async () => {
+    const token = localStorage.getItem('userToken');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BASE_URL}/service_user/reviews`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      console.log(response)
+      const data = await response.json()
+
+      console.log('data', data)
+      if(response.ok){
+        setServiceReviews(data)
+        // alert('service added successfully')
+        // getUserVehicles()
+      }
+      console.log(response)
+    } catch (error) {
+      // alert('Could not add service. Pleaase try again')
+      console.log(error)
+    }
+  }
 
   const handleDeleteGarage = async (garage) => {
     const confirmationMessage = "You are about to delete this garage. Proceed?"
@@ -241,6 +274,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchAllServices()
     fetchAllMechanics()
+    fetchServiceReviews()
   }, [])
 
   return (
@@ -262,6 +296,14 @@ const AdminDashboard = () => {
         >
           <FaClipboardList size={24} />
           <span className="mt-2 text-xs">Services</span>
+        </button>
+
+        <button
+          onClick={() => setSelectedSection('reviews')}
+          className={`text-gray-400 hover:text-white flex flex-col items-center ${selectedSection === 'reviews' ? 'text-white' : ''}`}
+        >
+          <FaComments size={24} />
+          <span className="mt-2 text-xs">Reviews</span>
         </button>
 
         {/* Toggle Sidebar for mobile */}
@@ -347,6 +389,48 @@ const AdminDashboard = () => {
                         >
                           Delete Service
                         </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                </table>
+            </div>
+          )}
+
+          {selectedSection === 'reviews' && (
+            <div>
+              {/* Content for 'serviceStatus' */}
+              <h1>Service Reviews</h1>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-3 text-center">Garage</th>
+                    <th className="border p-3 text-center">Customer</th>
+                    <th className="border p-3 text-center">Service</th>
+                    <th className="border p-3 text-center">Review</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {serviceReviews.map((review, index) => (
+                    <tr key={index}>
+                      <td className="border p-3 text-center">
+                        {review.garage.garage_name}<br></br>
+                        {review.garage.garage_email}<br></br>
+                      </td>
+                      
+                      <td className="border p-3 text-center">
+                        {review.customer.customer_name}<br></br>
+                        {review.customer.customer_email}<br></br>
+                      </td>
+                      
+                      <td className="border p-3 text-center">
+                        {review.service.service_name}<br></br>
+                        {review.service.service_location}<br></br>
+                        {review.service.service_cost}<br></br>
+                      </td>
+                      
+                      <td className="border p-3 text-center">
+                        {review.review_comment}
                       </td>
                     </tr>
                   ))}
