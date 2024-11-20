@@ -129,7 +129,7 @@ const Navbar = () => {
   return (
     <nav className="bg-gray-900 shadow-md">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-white">Towing Services</h1>
+        <h1 className="text-2xl font-semibold text-white">Okoa Gari</h1>
         <div className="space-x-6">
           <>
             {isAuthenticated() ? (
