@@ -53,7 +53,8 @@ const UserDashboard = () => {
 
         if(response.ok){
           alert('car deleleted successfully')
-          getUserVehicles()
+          getUserVehicles()   
+          fetchMyServices()
           setIsEditCarModalOpen(0)
         }
         console.log(response)
@@ -69,7 +70,7 @@ const UserDashboard = () => {
   const [review, setReview] = useState('');
   const [complaint, setComplaint] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSection, setActiveSection] = useState('car'); // Default section is 'profile'
+  const [activeSection, setActiveSection] = useState('profile'); // Default section is 'profile'
   const [paymentStatus, setPaymentStatus] = useState('');
   const [requestHistory, setRequestHistory] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -206,7 +207,8 @@ const UserDashboard = () => {
       if(response.ok){
         alert("Review Updated Successfully.")
         setIsReviewGarageOpen(false)
-
+        getUserVehicles()   
+        fetchMyServices()
         // setIsEditCarModalOpen(false)
         // getUserVehicles()
       }
@@ -262,7 +264,8 @@ const UserDashboard = () => {
       if(response.ok){
         alert("Car Details Updated Successfully.")
         setIsEditCarModalOpen(false)
-        getUserVehicles()
+        getUserVehicles()   
+        fetchMyServices()
       }
 
       console.log(response)
@@ -361,7 +364,8 @@ const UserDashboard = () => {
       body: JSON.stringify(vehicleServiceDetails),
     });
     const data = await response.json()
-
+    getUserVehicles()   
+    fetchMyServices()
     alert(data.msg)
 
     console.log(data)
@@ -434,6 +438,8 @@ const UserDashboard = () => {
       });
 
       console.log(response)
+      getUserVehicles()   
+        fetchMyServices()
       alert("Service paid successfully")
     } catch (error) {
       console.log(error)
@@ -954,7 +960,7 @@ const UserDashboard = () => {
         <ul className="space-y-4">
           {[
             { name: 'Profile', icon: <FaUserAlt />, section: 'profile' },
-            { name: 'Car', icon: <FaCar />, section: 'car' },
+            { name: 'Cars', icon: <FaCar />, section: 'car' },
             { name: 'Services', icon: <FaCar />, section: 'requestService' },
             { name: 'History', icon: <FaHistory />, section: 'requestHistory' },
           ].map(({ name, icon, section, onClick }) => (

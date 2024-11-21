@@ -401,41 +401,44 @@ const AdminDashboard = () => {
             <div>
               {/* Content for 'serviceStatus' */}
               <h1>Service Reviews</h1>
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="border p-3 text-center">Garage</th>
-                    <th className="border p-3 text-center">Customer</th>
-                    <th className="border p-3 text-center">Service</th>
-                    <th className="border p-3 text-center">Review</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {serviceReviews.map((review, index) => (
-                    <tr key={index}>
-                      <td className="border p-3 text-center">
-                        {review.garage.garage_name}<br></br>
-                        {review.garage.garage_email}<br></br>
-                      </td>
-                      
-                      <td className="border p-3 text-center">
-                        {review.customer.customer_name}<br></br>
-                        {review.customer.customer_email}<br></br>
-                      </td>
-                      
-                      <td className="border p-3 text-center">
-                        {review.service.service_name}<br></br>
-                        {review.service.service_location}<br></br>
-                        {review.service.service_cost}<br></br>
-                      </td>
-                      
-                      <td className="border p-3 text-center">
-                        {review.review_comment}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                </table>
+              <div style={{ maxHeight: '80vh', overflowY: 'auto', marginBottom: '50rem', paddingBottom: '5rem'}}>
+                  <table className="w-full border-collapse mb-4">
+                    <thead>
+                      <tr>
+                        <th className="border p-3 text-center">Garage</th>
+                        <th className="border p-3 text-center">Customer</th>
+                        <th className="border p-3 text-center">Service</th>
+                        <th className="border p-3 text-center">Review</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {serviceReviews.map((review, index) => (
+                        <tr key={index}>
+                          <td className="border p-3 text-center">
+                            {review.garage.garage_name}<br />
+                            {review.garage.garage_email}<br />
+                          </td>
+                          
+                          <td className="border p-3 text-center">
+                            {review.customer.customer_name}<br />
+                            {review.customer.customer_email}<br />
+                          </td>
+                          
+                          <td className="border p-3 text-center">
+                            {review.service.service_name}<br />
+                            {review.service.service_location}<br />
+                            {review.service.service_cost}<br />
+                          </td>
+                          
+                          <td className="border p-3 text-center">
+                            {review.review_comment}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
             </div>
           )}
         </div>
