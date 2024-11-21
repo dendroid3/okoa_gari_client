@@ -13,7 +13,7 @@ import './index.css'; // Tailwind CSS
 
 const App = () => {
   return (
-    <ErrorBoundary>
+    <ErrorBoundary className="font-roboto">
       <Router>
         <div
           className="min-h-screen bg-gray-100"

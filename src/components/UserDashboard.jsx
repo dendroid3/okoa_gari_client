@@ -85,16 +85,16 @@ const UserDashboard = () => {
     email: email || '',
   });
 
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedService, setSelectedService] = useState('');
   const [filteredServices, setFilteredServices] = useState([]);
 
-  const handleLocationChange = (e) => {
-    const location = e.target.value;
-    setSelectedLocation(location);
+  const handleServiceChange = (e) => {
+    const service = e.target.value;
+    setSelectedService(service);
 
-    // Filter services based on the selected location
-    const servicesInLocation = services.filter(service => service.service_location === location);
-    setFilteredServices(servicesInLocation);
+    const locationsForService = services.filter(filter_service => filter_service.service_name === service);
+
+    setFilteredServices(locationsForService);
   };
 
 
@@ -832,21 +832,21 @@ const UserDashboard = () => {
             <div className="relative">
               {Array.isArray(services) && services.length > 0 ? (
                 <div>
-                  <select onChange={handleLocationChange} value={selectedLocation} className="p-3 border mt-2 w-full rounded-md">
-                    <option value="">Select Location</option>
-                    {[...new Set(services.map(service => service.service_location))].map((location, index) => (
-                      <option key={index} value={location}>
-                        {location}
+                  <select onChange={handleServiceChange} value={selectedService} className="p-3 border mt-2 w-full rounded-md">
+                    <option value="">Select Service</option>
+                    {[...new Set(services.map(service => service.service_name))].map((service, index) => (
+                      <option key={index} value={service}>
+                        {service}
                       </option>
                     ))}
                   </select>
 
-                  {selectedLocation && (
+                  {selectedService && (
                     <select className="p-3 border mt-2 w-full rounded-md" onChange={handleVehicleServiceDetailsChange} name="service_id">
-                      <option value="">Select Service</option>
+                      <option value="">Select Location</option>
                       {filteredServices.map((service, index) => (
                         <option key={index} value={service.service_id}>
-                          {`${service.user_name}: ${service.service_name} (KES ${service.service_cost})`}
+                          {`${service.user_name} in ${service.service_location} for ${service.service_cost}/=`}
                         </option>
                       ))}
                     </select>

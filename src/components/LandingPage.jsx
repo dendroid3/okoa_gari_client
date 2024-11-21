@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 // Import images
 import towingImage from '../assets/towing.jpg';
 import mechanicImage from '../assets/mechanic.jpg';
-import batteryImage from '../assets/battery-replacement-1160x773.jpeg';
-import careEmergencyImage from '../assets/caremergency.avif';
+import batteryImage from '../assets/battery_replacement.jpg';
+import careEmergencyImage from '../assets/caremergency.jpg';
 import safetyInspectionImage from '../assets/Safety-Inspection.jpg';
 import tyreServiceImage from '../assets/tyreservice.jpg';
 
@@ -106,22 +106,6 @@ const Navbar = () => {
     if (isAuthenticated()) {
       navigate(`/${role}-dashboard`);
     } else {
-      if(role == 'admin') {
-        const adminSecretPhrase = 'LetAdminIn'
-        const adminSecretPhraseConfirmation = prompt("Enter Admin Secret Phrase")
-        if(adminSecretPhrase !== adminSecretPhraseConfirmation) {
-          alert("Wrong Admin Secret Phrase..")
-          return
-        }
-      }
-      if(role == 'garage') {
-        const garageSecretPhrase = 'LetGarageIn'
-        const garageSecretPhraseConfirmation = prompt("Enter Garage Secret Phrase")
-        if(garageSecretPhrase !== garageSecretPhraseConfirmation) {
-          alert("Wrong Garage Secret Phrase.")
-          return
-        }
-      }
       navigate(`/login?role=${role}`);
     }
   };
@@ -223,8 +207,8 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-6 text-center text-gray-400">
           <p>&copy; 2024 Towing Services. All rights reserved.</p>
           <div className="mt-4 space-x-6">
-            <a href="mailto:contact@towingservices.com" className="text-gray-200 hover:text-white" aria-label="Email us">Email Us</a>
-            <a href="tel:+1234567890" className="text-gray-200 hover:text-white" aria-label="Call us">Call Us</a>
+            <a href="mailto:contact@towingservices.com" className="text-gray-200 hover:text-white" aria-label="Email us">Email Us: Contact@TowingServices.com</a>
+            <a href="tel:+1234567890" className="text-gray-200 hover:text-white" aria-label="Call us">Call Us: +1234567890</a>
           </div>
           <div className="mt-4 space-x-6 flex justify-center">
             <a href="https://facebook.com/towingservices" className="text-gray-200 hover:text-white" aria-label="Facebook">
