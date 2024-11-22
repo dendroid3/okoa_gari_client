@@ -19,6 +19,63 @@ const GarageDashboard = () => {
     totalPayments: 0,
     performanceData: [],
   });
+  const handleContactDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setContactDetails((prevDetails) => ({
+      ...prevDetails,
+      [name]: value,
+    }));
+  };
+
+  const storedUserData = JSON.parse(localStorage.getItem('userData'));
+
+  const { name, email, location } = storedUserData || {};
+
+  // Initialize state with the destructured properties
+  const [contactDetails, setContactDetails] = useState({
+    name: name || '',
+    email: email || '',
+  });
+
+  const handleUpdateUserDetails = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('No token found');
+        return;
+      }
+
+      const user_data = JSON.parse(localStorage.getItem('userData'));
+      console.log("user_data", user_data)
+      const user_id = user_data.id
+      if (!user_id) {
+        console.error('Log in again');
+        return;
+      }
+  
+  
+      const response = await fetch(`${BASE_URL}/auth/user?user_id=${user_id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(contactDetails),
+      });
+
+      const data = await response.json()
+      console.log(`data`, data)
+
+      if (response.ok) 
+      { 
+        alert("Details successfully saved.")
+        localStorage.setItem('userData', JSON.stringify(data.user));
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const [newServiceDetails, setNewServiceDetails] = useState({
     name: '',
@@ -362,13 +419,13 @@ const GarageDashboard = () => {
       <div className="w-full md:w-1/4 bg-gray-800 text-white p-6 fixed md:relative md:h-full z-10 shadow-lg">
         <h2 className="text-2xl font-bold text-center text-blue-400 mb-6">Garage Dashboard</h2>
         <ul className="space-y-4">
-          {['myServices', 'serviceRequests'].map((section) => (
+          {['myProfile', 'myServices', 'serviceRequests'].map((section) => (
             <li key={section}>
               <button
                 onClick={() => handleSectionClick(section)}
                 className={`flex items-center space-x-4 py-3 text-left px-4 rounded hover:bg-gray-700 transition duration-300 ease-in-out ${activeSection === section ? 'bg-gray-700' : ''}`}
               >
-                <span className="text-2xl">{section === 'serviceRequests' ? <FaRegClock /> : section === 'paymentHistory' ? <FaCreditCard /> : section === 'notifications' ? <FaBell /> : section === 'messages' ? <FaInbox /> : <FaUserAlt />}</span>
+                <span className="text-2xl">{section === 'myProfile' ? <FaUserAlt /> : section === 'serviceRequests' ? <FaInbox /> : section === 'myServices' ? <FaBell /> : section === 'messages' ? <FaInbox /> : <FaUserAlt />}</span>
                 <span className="text-lg font-medium">{section.charAt(0).toUpperCase() + section.slice(1).replace(/([A-Z])/g, ' $1')}</span>
               </button>
             </li>
@@ -533,17 +590,40 @@ const GarageDashboard = () => {
               ))}
             </ul>
           </div>
+
+
         )}
 
         {/* Render based on active section */}
-        {activeSection === 'analytics' && (
+        {activeSection === 'myProfile' && (
           <div>
-            <h3 className="text-2xl font-bold mb-4">Services Requested</h3>
+            <h3 className="text-2xl font-bold mb-4">My Profile</h3>
             
 
-            <div className="bg-gray-800 p-6 rounded-lg shadow-md">
-              <Line data={chartData} options={chartOptions} />
-            </div>
+            <>
+              <h4 className="text-lg font-medium mt-6">Contact Details</h4>
+              {['name', 'email'].map((field) => (
+                <input
+                  key={field}
+                  type="text"
+                  name={field}
+                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  className="p-3 border mt-2 w-full rounded-md"
+                  value={contactDetails[field]}
+                  onChange={handleContactDetailsChange}
+                  style={{
+                    color: 'black',
+                  }}
+                />
+              ))}
+
+              <button
+                onClick={handleUpdateUserDetails}
+                className="bg-green-500 text-white py-2 px-6 rounded-lg mt-4 hover:bg-green-600 transition"
+              >
+                Save Changes
+              </button>
+          </>
           </div>
         )}
 
